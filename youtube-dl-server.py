@@ -8,6 +8,11 @@ from threading import Thread
 import youtube_dl
 from pathlib import Path
 from collections import ChainMap
+import requests
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Bottle()
 
@@ -44,7 +49,9 @@ def q_put():
     url = request.forms.get("url")
     options = {
         'format': request.forms.get("format"),
-        'filename': request.forms.get("filename")
+        'filename': request.forms.get("filename"),
+        'collectionId': request.forms.get("collectionId"),
+        'base_url': request.forms.get("base_url")
     }
 
     if not url:
@@ -65,10 +72,57 @@ def update():
         "error":  error.decode('ascii')
     }
 
+def login(request_options):
+    user_login = requests.post(request_options['base_url'] + '/auth/local', {
+        'identifier': os.getenv('IDENTIFIER'),
+        'password': os.getenv('PASSWORD'),
+    })
+
+    loging_content = json.loads(user_login.content.decode('utf-8'))
+    return loging_content['jwt']
+
+def upload_video(jwt, request_options):
+    upload_url = request_options['base_url'] + '/upload'
+    path = os.getenv('DOWNLOAD_PATH') + request_options['filename'] + '.mp4'
+    with open(path, 'rb') as f:
+        response = requests.post(
+            upload_url,
+            files={'files': (request_options['filename'] + '.mp4', f, 'video')},
+            headers={'Authorization': 'Bearer ' + jwt}
+        )
+
+    return response
+
+def get_video(request_options):
+    video_url = request_options['base_url'] +'/videos/' + request_options['collectionId']
+    return requests.get(video_url)
+
+def sanitize_video(upload_video_response, video):
+    video_sanitized = json.loads(video.content.decode('utf-8'))
+    upload_video_response_content = json.loads(upload_video_response.content.decode('utf-8'))
+
+    video_sanitized['partner'] = video_sanitized['partner']['id']
+    video_sanitized['language'] = video_sanitized['language']['id']
+    video_sanitized['category'] = video_sanitized['category']['id']
+    video_sanitized['source'] = upload_video_response_content[0]['id']
+
+    return video_sanitized
+
+def update_video_in_strapi(jwt, upload_video_response, video, request_options):
+    video_sanitized = sanitize_video(upload_video_response, video)
+    update_video_url = request_options['base_url'] +'/videos/' + request_options['collectionId']
+    headers={'Authorization': 'Bearer ' + jwt}
+    requests.put(update_video_url, data=video_sanitized, headers=headers)
+
 def dl_worker():
     while not done:
         url, options = dl_q.get()
         download(url, options)
+        jwt = login(options)
+        upload_video_response = upload_video(jwt, options)
+        if (upload_video_response.status_code == 200):
+            video = get_video(options)
+            update_video_in_strapi(jwt, upload_video_response, video, options)
         dl_q.task_done()
 
 
