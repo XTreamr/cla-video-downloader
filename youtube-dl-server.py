@@ -94,7 +94,7 @@ def upload_video(jwt, request_options):
     return response
 
 def get_video(request_options):
-    video_url = request_options['base_url'] +'/videos/' + request_options['collectionId']
+    video_url = request_options['base_url'] +'/videos/' + request_options['collectionId'] + '/all'
     return requests.get(video_url)
 
 def sanitize_video(upload_video_response, video):
