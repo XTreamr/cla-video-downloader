@@ -87,8 +87,9 @@ def upload_video(jwt, request_options):
     with open(path, 'rb') as f:
         response = requests.post(
             upload_url,
-            files={'files': (request_options['filename'] + '.mp4', f, 'video')},
-            headers={'Authorization': 'Bearer ' + jwt}
+            data = { "collectionId": request_options['collectionId'] },
+            files = {'files': (request_options['filename'] + '.mp4', f, 'video')},
+            headers = {'Authorization': 'Bearer ' + jwt}
         )
 
     return response
