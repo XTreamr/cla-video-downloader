@@ -62,7 +62,7 @@ Just navigate to `http://{{host}}:8080/youtube-dl` and enter the requested `{{ur
 #### Curl
 
 ```shell
-curl -X POST --data-urlencode "url={{url}}" http://{{host}}:8080/youtube-dl/q
+curl -X POST --data-urlencode "url={{url}}?format=bestvideo&filename=video1&base_url=http://my.strapi.instance&collectionId=123" http://{{host}}:8080/youtube-dl/q
 ```
 
 #### Fetch
@@ -73,7 +73,9 @@ fetch(`http://${host}:8080/youtube-dl/q`, {
   body: new URLSearchParams({
     url: url,
     format: "bestvideo",
-    filename:"video1"
+    filename:"video1",
+    base_url:"http://my.strapi.instance",
+    collectionId: 123
   }),
 });
 ```
@@ -83,7 +85,7 @@ fetch(`http://${host}:8080/youtube-dl/q`, {
 Add the following bookmarklet to your bookmark bar so you can conviently send the current page url to your youtube-dl-server instance.
 
 ```javascript
-javascript:!function(){fetch("http://${host}:8080/youtube-dl/q",{body:new URLSearchParams({url:window.location.href,format:"bestvideo"}),method:"POST"})}();
+javascript:!function(){fetch("http://${host}:8080/youtube-dl/q",{body:new URLSearchParams({url:window.location.href,format:"bestvideo", filename:"video1", base_url:"http://my.strapi.instance", collectionId: 123}),method:"POST"})}();
 ```
 
 ## Implementation
