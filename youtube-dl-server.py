@@ -25,7 +25,7 @@ app_defaults = {
     'YDL_OUTPUT_TEMPLATE': '%(title)s [%(id)s]',
     'YDL_ARCHIVE_FILE': None,
     'YDL_SERVER_HOST': '0.0.0.0',
-    'YDL_SERVER_PORT': 8080,
+    'YDL_SERVER_PORT': 3000,
 }
 
 
