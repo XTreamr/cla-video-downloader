@@ -24,7 +24,7 @@ app_defaults = {
     'YDL_RECODE_VIDEO_FORMAT': None,
     'YDL_OUTPUT_TEMPLATE': '%(title)s [%(id)s]',
     'YDL_ARCHIVE_FILE': None,
-    'YDL_SERVER_HOST': '10.0.0.0',
+    'YDL_SERVER_HOST': '0.0.0.0',
     'YDL_SERVER_PORT': 3000,
 }
 
