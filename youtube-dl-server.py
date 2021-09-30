@@ -74,8 +74,8 @@ def update():
 
 def login(request_options):
     user_login = requests.post(request_options['base_url'] + '/auth/local', {
-        'identifier': os.getenv('IDENTIFIER'),
-        'password': os.getenv('PASSWORD'),
+        'identifier': os.getenv('CLA_GENERATOR_USER'),
+        'password': os.getenv('CLA_GENERATOR_PASS'),
     })
 
     loging_content = json.loads(user_login.content.decode('utf-8'))

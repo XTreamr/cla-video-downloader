@@ -36,8 +36,8 @@ This is an example service definition that could be put in `docker-compose.yml`.
 You must create your .env file copying .env.example file and make sure you use correct data in the following variables (data used when you created previous database):
 
 ```
-  IDENTIFIER='importer@cla.app'
-  PASSWORD='1mp0rt3r%passw0rd'
+  CLA_GENERATOR_USER='dummy'
+  CLA_GENERATOR_PASS='gaseosa1234'
   DOWNLOAD_PATH = '/youtube-dl/'
 ```
 
