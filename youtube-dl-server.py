@@ -85,12 +85,12 @@ def upload_video(jwt, request_options):
     upload_url = request_options['base_url'] + '/upload'
     path = os.getenv('DOWNLOAD_PATH') + request_options['filename'] + '.mp4'
     with open(path, 'rb') as f:
-        response = requests.post(
-            upload_url,
-            data={'collectionId': request_options['collectionId']},
-            files={'files': (request_options['filename'] + '.mp4', f, 'video')},
-            headers={'Authorization': 'Bearer ' + jwt}
-        )
+        data = {'collectionId': request_options['collectionId']}
+        files = {'files': (request_options['filename'] + '.mp4', f, 'video')}
+        headers = {'Authorization': 'Bearer ' + jwt}
+        print("Uploading file to {0} with these params: data: {1}, files: {2}, headers: {3} ".format(upload_url, data, files, headers))
+
+        response = requests.post(upload_url, data = data, files = files, headers = headers)
 
     return response
 
@@ -121,6 +121,7 @@ def dl_worker():
         download(url, options)
         jwt = login(options)
         upload_video_response = upload_video(jwt, options)
+        print("Upload Response: %s", str(upload_video_response.content))
         if (upload_video_response.status_code == 200):
             video = get_video(options)
             update_video_in_strapi(jwt, upload_video_response, video, options)
