@@ -118,14 +118,17 @@ def update_video_in_strapi(jwt, upload_video_response, video, request_options):
 def dl_worker():
     while not done:
         url, options = dl_q.get()
-        download(url, options)
-        jwt = login(options)
-        upload_video_response = upload_video(jwt, options)
-        print("Upload Response: %s", str(upload_video_response.content))
-        if (upload_video_response.status_code == 200):
-            video = get_video(options)
-            update_video_in_strapi(jwt, upload_video_response, video, options)
-        dl_q.task_done()
+        try:
+            download(url, options)
+            jwt = login(options)
+            upload_video_response = upload_video(jwt, options)
+            print("Upload Response: %s", str(upload_video_response.content))
+            if (upload_video_response.status_code == 200):
+                video = get_video(options)
+                update_video_in_strapi(jwt, upload_video_response, video, options)
+            dl_q.task_done()
+        except:
+            print('Error in dl_worker (%s)' % url)
 
 
 def get_ydl_options(request_options):
