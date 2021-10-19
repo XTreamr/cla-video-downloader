@@ -174,7 +174,6 @@ def get_ydl_options(request_options):
 def download(url, request_options):
     with youtube_dl.YoutubeDL(get_ydl_options(request_options)) as ydl:
         try:
-            print('ok')
             ydl.download([url])
         except:
             print("Error for URL: ",url)
