@@ -94,6 +94,11 @@ def upload_video(jwt, request_options):
 
     return response
 
+def delete_video(request_options):
+    path = os.getenv('DOWNLOAD_PATH') + request_options['filename'] + '.mp4'
+    if os.path.isfile(path):
+        os.remove(path)
+
 def get_video(request_options):
     video_url = request_options['base_url'] +'/videos/' + request_options['collectionId']
     return requests.get(video_url)
@@ -123,11 +128,13 @@ def dl_worker():
             jwt = login(options)
             upload_video_response = upload_video(jwt, options)
             print("Upload Response: %s", str(upload_video_response.content))
+            delete_video(options)
             if (upload_video_response.status_code == 200):
                 video = get_video(options)
                 update_video_in_strapi(jwt, upload_video_response, video, options)
             dl_q.task_done()
         except:
+            delete_video(options)
             print('Error in dl_worker (%s)' % url)
 
 
