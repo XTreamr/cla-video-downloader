@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 import json
-import os
+import glob, os
 import subprocess
 from queue import Queue
 from bottle import route, run, Bottle, request, static_file
@@ -95,9 +95,15 @@ def upload_video(jwt, request_options):
     return response
 
 def delete_video(request_options):
-    path = os.getenv('DOWNLOAD_PATH') + request_options['filename'] + '.mp4'
-    if os.path.isfile(path):
-        os.remove(path)
+    path = os.getenv('DOWNLOAD_PATH') + request_options['filename'] + '.*'
+    print("Delete files matching: %s", path)
+
+    # Get all files with suffix jpg
+    files = glob.glob(path)
+
+    # Iterate over the list of files and remove individually
+    for file in files:
+        os.remove(file)
 
 def get_video(request_options):
     video_url = request_options['base_url'] +'/videos/' + request_options['collectionId']
