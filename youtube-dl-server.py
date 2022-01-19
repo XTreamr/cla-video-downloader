@@ -11,6 +11,7 @@ from collections import ChainMap
 import requests
 import os
 from dotenv import load_dotenv
+from datetime import datetime
 
 load_dotenv()
 
@@ -106,25 +107,28 @@ def delete_video(request_options):
         os.remove(file)
 
 def get_video(request_options):
-    video_url = request_options['base_url'] +'/videos/' + request_options['collectionId']
+    video_url = request_options['base_url'] + '/videos/' + request_options['collectionId'] + '/all'
     return requests.get(video_url)
 
 def sanitize_video(upload_video_response, video):
-    video_sanitized = json.loads(video.content.decode('utf-8'))
-    upload_video_response_content = json.loads(upload_video_response.content.decode('utf-8'))
+    if upload_video_response != '':
+        upload_video_response_content = json.loads(upload_video_response.content.decode('utf-8'))
+        video['source'] = upload_video_response_content[0]['id']
+    elif video['source'] is not None:
+        video['source'] = video['source']['id']
 
-    video_sanitized['partner'] = video_sanitized['partner']['id']
-    video_sanitized['language'] = video_sanitized['language']['id']
-    video_sanitized['category'] = video_sanitized['category']['id']
-    video_sanitized['source'] = upload_video_response_content[0]['id']
+    video['partner'] = video['partner']['id']
+    video['category'] = video['category']['id']
+    if video['language'] is not None:
+        video['language'] = video['language']['id']
 
-    return video_sanitized
+    return video
 
 def update_video_in_strapi(jwt, upload_video_response, video, request_options):
     video_sanitized = sanitize_video(upload_video_response, video)
     update_video_url = request_options['base_url'] +'/videos/' + request_options['collectionId']
-    headers={'Authorization': 'Bearer ' + jwt}
-    requests.put(update_video_url, data=video_sanitized, headers=headers)
+    headers = {'Authorization': 'Bearer ' + jwt, 'Content-Type': 'application/json'}
+    requests.put(update_video_url, json=video_sanitized, headers=headers)
 
 def dl_worker():
     while not done:
@@ -137,11 +141,27 @@ def dl_worker():
             delete_video(options)
             if (upload_video_response.status_code == 200):
                 video = get_video(options)
+                video = json.loads(video.content.decode('utf-8'))
                 update_video_in_strapi(jwt, upload_video_response, video, options)
             dl_q.task_done()
         except:
-            delete_video(options)
-            print('Error in dl_worker (%s)' % url)
+            try:
+                jwt = login(options)
+                video = get_video(options)
+                video = json.loads(video.content.decode('utf-8'))
+                data = {
+                    "date": str(datetime.now()),
+                    "description": "Failed downloading video en Youtube DL",
+                    "status_name": "failed_downloading"
+                }
+                video['status'].append(data)
+                update_video_in_strapi(jwt, '', video, options)
+                debug_url = options['base_url'] + '/videos/' + options['collectionId']
+                delete_video(options)
+                print('Status "failed_downloading" added successfully (%s)' % debug_url)
+            except:
+                delete_video(options)
+                print('Error in dl_worker (%s)' % url)
 
 
 def get_ydl_options(request_options):
