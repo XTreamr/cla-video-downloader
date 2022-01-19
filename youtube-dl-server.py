@@ -106,9 +106,10 @@ def delete_video(request_options):
     for file in files:
         os.remove(file)
 
-def get_video(request_options):
+def get_video(jwt, request_options):
     video_url = request_options['base_url'] + '/videos/' + request_options['collectionId'] + '/all'
-    return requests.get(video_url)
+    headers = {'Authorization': 'Bearer ' + jwt}
+    return requests.get(video_url, headers=headers)
 
 def sanitize_video(upload_video_response, video):
     if upload_video_response != '':
@@ -140,14 +141,14 @@ def dl_worker():
             print("Upload Response: %s", str(upload_video_response.content))
             delete_video(options)
             if (upload_video_response.status_code == 200):
-                video = get_video(options)
+                video = get_video(jwt, options)
                 video = json.loads(video.content.decode('utf-8'))
                 update_video_in_strapi(jwt, upload_video_response, video, options)
             dl_q.task_done()
         except:
             try:
                 jwt = login(options)
-                video = get_video(options)
+                video = get_video(jwt, options)
                 video = json.loads(video.content.decode('utf-8'))
                 data = {
                     "date": str(datetime.now()),
