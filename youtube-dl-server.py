@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 import json
-import os
+import glob, os
 import subprocess
 from queue import Queue
 from bottle import route, run, Bottle, request, static_file
@@ -95,6 +95,17 @@ def upload_video(jwt, request_options):
 
     return response
 
+def delete_video(request_options):
+    path = os.getenv('DOWNLOAD_PATH') + request_options['filename'] + '.*'
+    print("Delete files matching: %s", path)
+
+    # Get all files with suffix jpg
+    files = glob.glob(path)
+
+    # Iterate over the list of files and remove individually
+    for file in files:
+        os.remove(file)
+
 def get_video(request_options):
     video_url = request_options['base_url'] + '/videos/' + request_options['collectionId'] + '/all'
     return requests.get(video_url)
@@ -127,6 +138,7 @@ def dl_worker():
             jwt = login(options)
             upload_video_response = upload_video(jwt, options)
             print("Upload Response: %s", str(upload_video_response.content))
+            delete_video(options)
             if (upload_video_response.status_code == 200):
                 video = get_video(options)
                 video = json.loads(video.content.decode('utf-8'))
@@ -145,8 +157,10 @@ def dl_worker():
                 video['status'].append(data)
                 update_video_in_strapi(jwt, '', video, options)
                 debug_url = options['base_url'] + '/videos/' + options['collectionId']
+                delete_video(options)
                 print('Status "failed_downloading" added successfully (%s)' % debug_url)
             except:
+                delete_video(options)
                 print('Error in dl_worker (%s)' % url)
 
 
